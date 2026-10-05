@@ -1,0 +1,219 @@
+gemini
+1.tengo que hacer una app codificada en kotlin para una libreria donde unicamente se venden los libros, las clases que tenia pensado eran, libro para el catalogo, usuarios, vendedor, comprados, pago, carrito, nose que mas se puede necesitar
+2. como quedaria la lista completa de clases con sus arributos y sus metodos
+Claude
+3. Claude necesito que me generes un pdf con la imagen del UML de este diseño de clases: Para tener una visión global y bien estructurada de la arquitectura de la aplicación, aquí tienes la **lista completa de clases** agrupadas por su responsabilidad en el sistema, detallando sus **atributos** y sus **métodos principales**.
+
+---
+
+## 1. Módulo de Catálogo e Inventario
+
+### `Libro` (Data Class / Entidad)
+
+Representa la información de cada unidad en venta.
+
+* **Atributos:**
+* `id: String`
+* `titulo: String`
+* `autor: String`
+* `isbn: String`
+* `precio: Double`
+* `categoria: CategoriaLibro` (Enum)
+* `stockDisponible: Int`
+
+
+* **Métodos:**
+* `hayStockSuficiente(cantidad: Int): Boolean`
+* `reducirStock(cantidad: Int): Boolean`
+* `incrementarStock(cantidad: Int)`
+
+
+
+### `GestorInventario` (Clase de Servicio / Repositorio)
+
+Administra la disponibilidad de los libros en el catálogo general.
+
+* **Atributos:**
+* `catalogoLibros: MutableList<Libro>`
+
+
+* **Métodos:**
+* `registrarLibro(libro: Libro)`
+* `actualizarPrecio(libroId: String, nuevoPrecio: Double)`
+* `buscarPorTitulo(titulo: String): List<Libro>`
+* `buscarPorAutor(autor: String): List<Libro>`
+* `filtrarPorCategoria(categoria: CategoriaLibro): List<Libro>`
+* `obtenerLibroPorId(id: String): Libro?`
+
+
+
+---
+
+## 2. Módulo de Usuarios y Sesión
+
+### `Usuario` (Clase Abstracta Base)
+
+Estructura general con datos básicos de cualquier usuario.
+
+* **Atributos:**
+* `id: String`
+* `nombre: String`
+* `email: String`
+
+
+* **Métodos:**
+* `obtenerPerfil(): String`
+
+
+
+### `Cliente` (Hereda de `Usuario`)
+
+Representa al comprador dentro de la tienda.
+
+* **Atributos:**
+* `id`, `nombre`, `email` *(heredados)*
+* `direccionEnvio: String`
+* `telefono: String`
+
+
+* **Métodos:**
+* `actualizarDireccion(nuevaDireccion: String)`
+
+
+
+### `Vendedor` (Hereda de `Usuario`)
+
+Representa al personal administrativo o de tienda.
+
+* **Atributos:**
+* `id`, `nombre`, `email` *(heredados)*
+* `codigoEmpleado: String`
+
+
+* **Métodos:**
+* `modificarStock(libro: Libro, nuevoStock: Int)`
+
+
+
+---
+
+## 3. Módulo de Carrito y Compras
+
+### `ElementoCarrito` (Data Class)
+
+Representa un ítem dentro del carrito junto con la cantidad seleccionada.
+
+* **Atributos:**
+* `libro: Libro`
+* `cantidad: Int`
+
+
+* **Métodos:**
+* `calcularSubtotal(): Double`
+
+
+
+### `Carrito` (Clase de Dominio)
+
+Maneja la selección temporal de compras de un cliente.
+
+* **Atributos:**
+* `cliente: Cliente`
+* `items: MutableList<ElementoCarrito>`
+
+
+* **Métodos:**
+* `agregarItem(libro: Libro, cantidad: Int)`
+* `modificarCantidad(libroId: String, nuevaCantidad: Int)`
+* `removerItem(libroId: String)`
+* `calcularTotal(): Double`
+* `vaciar()`
+
+
+
+---
+
+## 4. Módulo de Transacciones y Pagos
+
+### `MetodoPago` (Sealed Class / Interfaz)
+
+Soporta los distintos medios de pago disponibles.
+
+* **Tipos / Subclases:**
+* `Efectivo`
+* `Tarjeta(numeroTarjeta: String, titular: String, expiracion: String)`
+* `TransferenciaQR(codigoQR: String)`
+
+
+
+### `Pago` (Data Class)
+
+Registra la transacción monetaria realizada.
+
+* **Atributos:**
+* `id: String`
+* `monto: Double`
+* `metodo: MetodoPago`
+* `fechaHora: LocalDateTime`
+* `exitoso: Boolean`
+
+
+* **Métodos:**
+* `procesarPago(): Boolean`
+
+
+
+### `DetalleVenta` (Data Class)
+
+Guarda la fotografía o registro histórico de cada ítem vendido (evita alteraciones si la información original del libro cambia en el catálogo).
+
+* **Atributos:**
+* `libroId: String`
+* `tituloLibro: String`
+* `precioUnitario: Double`
+* `cantidad: Int`
+
+
+* **Métodos:**
+* `calcularSubtotal(): Double`
+
+
+
+### `Pedido` / `Venta` (Data Class)
+
+Consolida la compra efectuada de forma definitiva.
+
+* **Atributos:**
+* `id: String`
+* `cliente: Cliente`
+* `items: List<DetalleVenta>`
+* `pago: Pago`
+* `total: Double`
+* `fecha: LocalDateTime`
+* `estado: EstadoPedido` (Enum: `PENDIENTE`, `COMPLETADO`, `CANCELADO`)
+
+
+* **Métodos:**
+* `generarResumen(): String`
+* `cancelarPedido()`
+
+
+
+---
+
+## 5. Módulo de Control de Negocio (Service / Controller)
+
+### `ProcesadorDeVenta` (Clase de Servicio)
+
+Orquesta el flujo completo cuando el cliente confirma la compra.
+
+* **Atributos:**
+* `gestorInventario: GestorInventario`
+
+
+* **Métodos:**
+* `completarVenta(carrito: Carrito, metodoPago: MetodoPago): Pedido?`
+* `validarDisponibilidad(carrito: Carrito): Boolean`
+4.ahora dame el codigo para estas clases unicamente de lo que se diseño, dame el nombre del archivo y el codigo
+5. ahora para esta parte quiero hacer el catalogo y la pantalla donde se todos los datos del libro algo como la imagen que te mande, listame lo que se necesita para hcerlo y mejora mi diseño: Diseña dos interfaces que permita listar al menos dos de los objetos implementados, detalla los componentes de Jetpack compose que serán utilizados.
+6. ahora realiza el codigo de esas dos pantallas en kotlin y dame el main para que compile
